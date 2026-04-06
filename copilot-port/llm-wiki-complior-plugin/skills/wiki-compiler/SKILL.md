@@ -51,7 +51,60 @@ For EACH topic that has new or changed source files:
 
 1. Read ALL source files classified under that topic (need full context, not just changed files)
 2. Write the topic article to `{output}/topics/{topic-slug}.md`
-3. Use the article template from `${CLAUDE_PLUGIN_ROOT}/templates/article-template.md`
+3. Use this article template:
+   ```markdown
+   ---
+   topic: {Topic Name}
+   last_compiled: {YYYY-MM-DD}
+   source_count: {number}
+   status: active
+   ---
+
+   # {Topic Name}
+
+   ## Summary [coverage: {high|medium|low} -- {N} sources]
+   {2-3 paragraph synthesis of everything known about this topic.
+   Written as a briefing -- someone reading just this section should
+   understand the current state without reading any source file.
+   Be specific with numbers, dates, and decisions -- not vague summaries.}
+
+   ## Timeline [coverage: {high|medium|low} -- {N} sources]
+   {Key events in chronological order}
+   - **YYYY-MM-DD:** {What happened}
+
+   ## Current State [coverage: {high|medium|low} -- {N} sources]
+   {What's true RIGHT NOW: active metrics, live experiments, open questions.
+   This section should be immediately actionable.}
+
+   ## Key Decisions [coverage: {high|medium|low} -- {N} sources]
+   {Decisions that shaped current approach, with rationale}
+   - **YYYY-MM-DD:** {Decision} -- {Why}
+
+   ## Experiments & Results [coverage: {high|medium|low} -- {N} sources]
+   | Experiment | Status | Finding | Source |
+   |------------|--------|---------|--------|
+
+   ## Gotchas & Known Issues [coverage: {high|medium|low} -- {N} sources]
+   {Relevant known issues, traps, and workarounds.
+   Only include entries relevant to THIS topic.}
+
+   ## Open Questions [coverage: {high|medium|low} -- {N} sources]
+   {Unresolved threads, gaps in knowledge, suggested next investigations.}
+
+   ## Sources
+   {List ALL source files that contributed to this article}
+   - [[relative/path/to/source]]
+
+   ---
+
+   ## Coverage Guide
+
+   Coverage indicators help the reader (human or AI) decide whether to trust this section or read raw sources:
+
+   - **high** -- 5+ sources, detailed synthesis, recently compiled. Trust this section.
+   - **medium** -- 2-4 sources, decent coverage but may miss detail. Check raw sources for granular questions.
+   - **low** -- 1 source or sparse data. Read the raw sources listed below this section.
+   ```
 4. Fill every section with specific, factual content -- no placeholders
 5. **Summary** should be a standalone briefing: someone reading just this section should understand the current state
 6. **Timeline** entries must have real dates
@@ -125,7 +178,58 @@ This is the "so what" that Farzapedia calls the writer's job.}
 ## Phase 3.7: Generate or Update Schema
 
 If `{output}/schema.md` does not exist (first run):
-1. Generate it from `${CLAUDE_PLUGIN_ROOT}/templates/schema-template.md`
+1. Generate it from this schema template:
+   ```markdown
+   # Wiki Schema
+
+   This file defines the structure and conventions for this knowledge base wiki. It is generated on first compile and co-evolved between human and LLM on subsequent runs.
+
+   **Human:** You can edit this file to rename topics, merge them, add conventions, or change the article structure. The compiler will respect your changes on the next run.
+
+   **Compiler:** Read this file before classifying sources. Follow its conventions. Add new topics here when discovered. Never remove topics without human approval.
+
+   ## Topics
+
+   {For each topic, list slug and one-line description}
+   - {topic-slug}: {what this topic covers}
+
+   ## Concepts
+
+   {Cross-cutting patterns that span 3+ topics. Interpretive, not just factual.}
+   - {concept-slug}: {what pattern this captures} — connects [{topic1}, {topic2}, {topic3}]
+
+   ## Article Structure
+
+   Each topic article follows this format:
+   - **Summary** [coverage] -- standalone briefing, 2-3 paragraphs
+   - **Timeline** [coverage] -- chronological events with YYYY-MM-DD dates
+   - **Current State** [coverage] -- what's true right now, immediately actionable
+   - **Key Decisions** [coverage] -- with rationale and source links
+   - **Experiments & Results** [coverage] -- status table
+   - **Gotchas & Known Issues** [coverage] -- topic-specific traps and workarounds
+   - **Open Questions** [coverage] -- unresolved threads, gaps
+   - **Sources** -- backlinks to every contributing raw file
+
+   Coverage tags: `[coverage: high -- N sources]`, `[coverage: medium -- N sources]`, `[coverage: low -- N sources]`
+
+   ## Naming Conventions
+
+   - Topic slugs: lowercase-kebab-case (e.g., `d1-retention`, `push-notifications`)
+   - Files: `{topic-slug}.md` in `topics/`
+   - Dates: YYYY-MM-DD format everywhere
+   - Links: Obsidian `[[wikilinks]]` with relative paths from `topics/`
+
+   ## Cross-Reference Rules
+
+   - Topics that share 3+ sources should reference each other in their Summary or Key Decisions sections
+   - Decisions that affect multiple topics get noted in each relevant topic's Key Decisions section
+   - When a gotcha applies to multiple topics, include it in each with a note like "(also in [[other-topic]])"
+
+   ## Evolution Log
+
+   {Chronological record of schema changes}
+   - {YYYY-MM-DD}: {what changed and why}
+   ```
 2. Fill in the Topics section AND Concepts section with all discovered slugs and descriptions
 3. Add an Evolution Log entry: "{today's date}: Initial schema generated from {N} topics, {N} concepts"
 
