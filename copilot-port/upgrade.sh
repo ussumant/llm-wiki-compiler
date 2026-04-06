@@ -5,11 +5,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SOURCE_DIR="${REPO_ROOT}/plugin"
-DEST_DIR="${SCRIPT_DIR}/llm-wiki-complior-plugin"
+DEST_DIR="${SCRIPT_DIR}/llm-wiki-compiler-plugin"
 TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/copilot-port-upgrade.XXXXXX")"
 trap 'rm -rf "${TMP_ROOT}"' EXIT
 
-REPO_ROOT="${REPO_ROOT}" SOURCE_DIR="${SOURCE_DIR}" DEST_DIR="${DEST_DIR}" TMP_ROOT="${TMP_ROOT}" python <<'PY'
+REPO_ROOT="${REPO_ROOT}" SOURCE_DIR="${SOURCE_DIR}" DEST_DIR="${DEST_DIR}" TMP_ROOT="${TMP_ROOT}" python3 <<'PY'
 import json
 import os
 import re

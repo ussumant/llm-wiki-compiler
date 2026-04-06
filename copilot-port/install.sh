@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_DIR="${SCRIPT_DIR}/llm-wiki-complior-plugin"
+PLUGIN_DIR="${SCRIPT_DIR}/llm-wiki-compiler-plugin"
 PLUGIN_NAME="llm-wiki-compiler"
 
 if ! command -v copilot >/dev/null 2>&1; then
@@ -22,7 +22,7 @@ if [ ! -f "${PLUGIN_DIR}/hooks.template.json" ]; then
 fi
 
 generate_hooks_config() {
-  PLUGIN_DIR="${PLUGIN_DIR}" python - <<'PY'
+  PLUGIN_DIR="${PLUGIN_DIR}" python3 - <<'PY'
 import json
 import os
 from pathlib import Path
@@ -85,7 +85,7 @@ configure_chat_plugin() {
 
   mkdir -p "$(dirname "${settings_file}")"
 
-  SETTINGS_FILE="${settings_file}" PLUGIN_DIR="${PLUGIN_DIR}" python - <<'PY'
+  SETTINGS_FILE="${settings_file}" PLUGIN_DIR="${PLUGIN_DIR}" python3 - <<'PY'
 import json
 import os
 from pathlib import Path
