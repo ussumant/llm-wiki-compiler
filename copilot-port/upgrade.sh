@@ -54,6 +54,7 @@ def copy_tree(src: Path, dst: Path) -> None:
 
 
 def replace_string_values(value, old: str, new: str):
+    """Recursively replace strings across nested JSON-like data structures."""
     if isinstance(value, str):
         return value.replace(old, new)
     if isinstance(value, list):
@@ -64,6 +65,7 @@ def replace_string_values(value, old: str, new: str):
 
 
 def indent_code_block(template: str, spaces: int) -> str:
+    """Indent non-empty template lines for fenced markdown blocks and preserve empty lines."""
     prefix = " " * spaces
     indented_lines = []
     for line in template.rstrip("\n").splitlines():
@@ -75,6 +77,7 @@ def indent_code_block(template: str, spaces: int) -> str:
 
 
 def transform_session_start(source_text: str) -> str:
+    """Convert the shared session-start hook into the Copilot-specific generated variant."""
     replacement = textwrap.dedent(
         """\
         project_root="$(dirname "$config_file")"
@@ -184,6 +187,7 @@ state_file="\$project_root/\$output_path/\.compile-state\.json"
 
 
 def transform_skill(skill_text: str, article_template: str, schema_template: str) -> str:
+    """Inline shared template files into the generated Copilot skill markdown."""
     article_block = "3. Use this article template:\n   ```markdown\n" + indent_code_block(article_template, 3) + "\n   ```"
     schema_block = "1. Generate it from this schema template:\n   ```markdown\n" + indent_code_block(schema_template, 3) + "\n   ```"
 
@@ -206,6 +210,7 @@ def transform_skill(skill_text: str, article_template: str, schema_template: str
 
 
 def transform_wiki_upgrade() -> str:
+    """Generate the Copilot-specific wiki-upgrade command instructions."""
     return textwrap.dedent(
         """\
         # Upgrade Wiki Compiler Plugin
