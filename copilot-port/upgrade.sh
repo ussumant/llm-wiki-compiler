@@ -150,15 +150,14 @@ def transform_session_start(source_text: str) -> str:
     updated_text = updated_text.replace('at $output_path ($topic_count topics, last compiled: $last_compiled)', 'at $output_prefix ($topic_count topics, last compiled: $last_compiled)')
     updated_text = updated_text.replace('Never modify wiki/ files directly', 'Never modify ${output_prefix} files directly')
 
-    copilot_output = textwrap.dedent(
-        """\
-        # Output in Copilot-compatible hook format
-        printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped_context"
-        """
+    copilot_output = (
+        '# Output in Copilot-compatible hook format\n'
+        'printf \'{\\n  "hookSpecificOutput": {\\n    "hookEventName": "SessionStart",\\n'
+        '    "additionalContext": "%s"\\n  }\\n}\\n\' "$escaped_context"\n'
     )
     updated_text, count = re.subn(
         r'# Output in correct format per platform\nif \[ -n "\$\{CURSOR_PLUGIN_ROOT:-\}" \]; then\n  printf .*?\nfi\n',
-        copilot_output,
+        lambda _: copilot_output,
         updated_text,
         count=1,
         flags=re.S,
@@ -209,7 +208,7 @@ def transform_wiki_upgrade() -> str:
 
         3. **If the update command fails or the plugin was installed from this local port**, tell the user to rerun the installer from the cloned repository:
            > Reinstall the staged Copilot port by rerunning `copilot-port/install.sh` from the cloned repository.
-           >
+           > 
            > Re-run `copilot-port/install.sh` from the cloned `llm-wiki-compiler` repository, then restart the Copilot CLI session and reload the editor window for Copilot Chat.
 
         4. **If the user asks what changed**, summarize the latest commits from the repository checkout they are using.
@@ -229,17 +228,30 @@ copy_tree(source_dir / "skills", staging_dir / "skills")
 (staging_dir / "hooks").mkdir(parents=True, exist_ok=True)
 
 source_manifest = json.loads(read_text(source_dir / ".claude-plugin" / "plugin.json"))
-source_manifest.update(
+manifest = {}
+metadata_fields = {
+    "license": "MIT",
+    "repository": "https://github.com/mlesk/llm-wiki-compiler",
+    "homepage": "https://github.com/mlesk/llm-wiki-compiler",
+}
+metadata_inserted = False
+for key, value in source_manifest.items():
+    if key == "keywords" and not metadata_inserted:
+        manifest.update(metadata_fields)
+        metadata_inserted = True
+    manifest[key] = value
+
+if not metadata_inserted:
+    manifest.update(metadata_fields)
+
+manifest.update(
     {
-        "license": "MIT",
-        "repository": "https://github.com/mlesk/llm-wiki-compiler",
-        "homepage": "https://github.com/mlesk/llm-wiki-compiler",
         "commands": "commands/",
         "skills": "skills/",
         "hooks": "hooks.json",
     }
 )
-write_text(staging_dir / "plugin.json", json.dumps(source_manifest, indent=2) + "\n")
+write_text(staging_dir / "plugin.json", json.dumps(manifest, indent=2) + "\n")
 
 hook_template = json.loads(read_text(source_dir / "hooks" / "hooks.json"))
 hook_template = replace_string_values(hook_template, "${CLAUDE_PLUGIN_ROOT}", "__PLUGIN_ROOT__")
