@@ -1,0 +1,22 @@
+{
+  "name": "llm-wiki-compiler",
+  "version": "1.0.0",
+  "description": "Compile scattered markdown knowledge files into a topic-based wiki. Non-destructive, Obsidian-compatible, with staged adoption.",
+  "author": {
+    "name": "Sumant Manne"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/mlesk/llm-wiki-compiler",
+  "homepage": "https://github.com/mlesk/llm-wiki-compiler",
+  "keywords": [
+    "wiki",
+    "knowledge-base",
+    "compilation",
+    "obsidian",
+    "markdown",
+    "context-optimization"
+  ],
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks.json"
+}

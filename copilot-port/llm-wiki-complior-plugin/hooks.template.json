@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"__PLUGIN_ROOT__/hooks/session-start\"",
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}
