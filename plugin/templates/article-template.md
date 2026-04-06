@@ -1,5 +1,6 @@
 ---
 topic: {Topic Name}
+type: knowledge
 last_compiled: {YYYY-MM-DD}
 source_count: {number}
 status: active
@@ -18,16 +19,27 @@ Be specific with numbers, dates, and decisions -- not vague summaries.}
 - **YYYY-MM-DD:** {What happened}
 
 ## Current State [coverage: {high|medium|low} -- {N} sources]
-{What's true RIGHT NOW: active metrics, live experiments, open questions.
+{What's true RIGHT NOW: active metrics, live experiments, deployed versions.
 This section should be immediately actionable.}
 
 ## Key Decisions [coverage: {high|medium|low} -- {N} sources]
 {Decisions that shaped current approach, with rationale}
 - **YYYY-MM-DD:** {Decision} -- {Why}
 
+## Parameters [coverage: {high|medium|low} -- {N} sources]
+{Key configuration parameters, environment variables, and their current values.
+Include valid ranges and what happens when changed.}
+
+| Parameter | Current Value | Default | Description |
+|-----------|--------------|---------|-------------|
+
 ## Experiments & Results [coverage: {high|medium|low} -- {N} sources]
-| Experiment | Status | Finding | Source |
-|------------|--------|---------|--------|
+| Experiment | Date | Status | Finding | Source |
+|------------|------|--------|---------|--------|
+
+## Deployment [coverage: {high|medium|low} -- {N} sources]
+{Service names, systemd units, deployment history, rollback procedures.
+What's running where, how to restart, how to roll back.}
 
 ## Gotchas & Known Issues [coverage: {high|medium|low} -- {N} sources]
 {Relevant known issues, traps, and workarounds.
@@ -44,8 +56,6 @@ Only include entries relevant to THIS topic.}
 
 ## Coverage Guide
 
-Coverage indicators help the reader (human or AI) decide whether to trust this section or read raw sources:
-
-- **high** -- 5+ sources, detailed synthesis, recently compiled. Trust this section.
-- **medium** -- 2-4 sources, decent coverage but may miss detail. Check raw sources for granular questions.
-- **low** -- 1 source or sparse data. Read the raw sources listed below this section.
+- **high** -- 5+ sources, detailed synthesis. Trust this section.
+- **medium** -- 2-4 sources, decent coverage. Check raw sources for granular questions.
+- **low** -- 1 source or sparse data. Read the raw sources directly.

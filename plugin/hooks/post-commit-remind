@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# PostToolUse hook — after Bash calls containing git commit/push,
+# remind Claude to update the wiki for changed files.
+
+set -euo pipefail
+
+# Read the tool input from stdin (Claude Code passes JSON)
+input=$(cat 2>/dev/null || echo "{}")
+
+# Extract the command that was run
+cmd=$(echo "$input" | python3 -c "
+import json, sys
+try:
+    d = json.load(sys.stdin)
+    # PostToolUse passes tool_input.command
+    print(d.get('tool_input', {}).get('command', ''))
+except:
+    print('')
+" 2>/dev/null || echo "")
+
+# Only trigger on git commit or git push
+case "$cmd" in
+  *"git commit"*|*"git push"*)
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+# Find .wiki-compiler.json
+config_file=""
+dir="$PWD"
+while [ "$dir" != "/" ]; do
+  if [ -f "$dir/.wiki-compiler.json" ]; then
+    config_file="$dir/.wiki-compiler.json"
+    break
+  fi
+  dir="$(dirname "$dir")"
+done
+
+[ -z "$config_file" ] && exit 0
+
+project_root="$(dirname "$config_file")"
+output_path=$(python3 -c "import json; print(json.load(open('$config_file')).get('output',''))" 2>/dev/null || echo "")
+[ -z "$output_path" ] && exit 0
+
+state_file="$project_root/$output_path/.compile-state.json"
+[ ! -f "$state_file" ] && exit 0
+
+last_compiled=$(python3 -c "import json; print(json.load(open('$state_file')).get('last_compiled',''))" 2>/dev/null || echo "")
+
+# Get list of files changed in the commit
+changed_files=$(cd "$project_root" && git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+[ -z "$changed_files" ] && exit 0
+
+# Check if any source files (not wiki output) were changed
+source_dirs=$(python3 -c "
+import json
+c = json.load(open('$config_file'))
+for s in c.get('sources', []):
+    print(s.get('path', ''))
+" 2>/dev/null || echo "")
+
+wiki_dirty=false
+changed_list=""
+for f in $changed_files; do
+  for sd in $source_dirs; do
+    if echo "$f" | grep -q "^${sd}" 2>/dev/null; then
+      wiki_dirty=true
+      changed_list="$changed_list\n- $f"
+    fi
+  done
+  # Also flag .py file changes anywhere in the project
+  if echo "$f" | grep -qE '\.(py|md)$' 2>/dev/null; then
+    if ! echo "$f" | grep -q "^${output_path}" 2>/dev/null; then
+      wiki_dirty=true
+      changed_list="$changed_list\n- $f"
+    fi
+  fi
+done
+
+if [ "$wiki_dirty" = true ]; then
+  # Escape for JSON
+  msg="[Wiki Compiler] Source files changed in this commit. Consider running /wiki-compile to update the wiki.\nLast compiled: ${last_compiled}\nChanged source files:${changed_list}"
+  msg="${msg//\\/\\\\}"
+  msg="${msg//\"/\\\"}"
+  msg="${msg//$'\n'/\\n}"
+
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "PostToolUse",\n    "additionalContext": "%s"\n  }\n}\n' "$msg"
+fi
+
+exit 0

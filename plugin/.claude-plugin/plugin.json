@@ -1,9 +1,9 @@
 {
   "name": "llm-wiki-compiler",
-  "version": "1.0.0",
-  "description": "Compile scattered markdown knowledge files into a topic-based wiki. Non-destructive, Obsidian-compatible, with staged adoption.",
+  "version": "2.0.0",
+  "description": "Compile markdown and Python source files into a topic-based wiki. Fork with code-aware compilation, cross-directory sources, auto-update hooks, and trading system support.",
   "author": {
-    "name": "Sumant Manne"
+    "name": "yangwenbo (forked from Sumant Manne)"
   },
   "keywords": [
     "wiki",
@@ -11,6 +11,9 @@
     "compilation",
     "obsidian",
     "markdown",
+    "python",
+    "code-aware",
+    "trading",
     "context-optimization"
   ]
 }
