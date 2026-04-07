@@ -110,6 +110,7 @@ After step 4, Claude naturally reads wiki articles as part of its normal session
 | `/wiki-search` | Search across wiki articles by keyword or phrase |
 | `/wiki-lint` | Health checks -- finds stale articles, orphan pages, missing cross-references, contradictions, low coverage |
 | `/wiki-query` | Optional -- Q&A against the wiki. Can file useful answers back into wiki articles. |
+| `/wiki-migrate` | One-time migration -- analyzes your AGENTS.md startup reads, shows which are covered by wiki, generates replacement |
 | `/wiki-upgrade` | Update the plugin to the latest version from GitHub |
 
 The primary workflow is: **init → compile → add to AGENTS.md → done.** After that, Claude reads the wiki automatically. `/wiki-query` is a convenience for testing or quick lookups.
@@ -360,6 +361,42 @@ Searches topic names first (fast), then full article content if needed. Results 
 For synthesis questions that require connecting multiple topics, use `/wiki-query` instead.
 
 For large wikis (100+ topics), consider adding [qmd](https://github.com/jina-ai/qmd) as an MCP server for hybrid BM25/vector search with LLM re-ranking.
+
+### Migrate to Wiki-First Startup
+
+Once your wiki is compiled and spot-checked, run `/wiki-migrate` to switch your AGENTS.md from reading raw files to reading the wiki:
+
+```
+/wiki-migrate
+
+Wiki Migration Report for "My Project"
+
+Current startup: 13 file reads
+
+✅ gotchas.md → covered by analytics [coverage: high]
+✅ product-context.md → covered by product [coverage: high]
+⚠️ reporting-backlog.md → partially covered [coverage: medium]
+❌ acceptance-criteria.md → not covered (operational checklist)
+
+Summary: 10/13 reads can be replaced
+Estimated savings: ~79K → ~8.5K tokens (89% reduction)
+```
+
+The command generates a replacement startup section and applies it with your confirmation.
+
+### Stale Wiki Detection
+
+The plugin automatically detects when source files have changed since the last compile. Enable it in `.wiki-compiler.json`:
+
+```json
+{ "auto_update": "prompt" }
+```
+
+With `prompt` mode, the SessionStart hook counts changed files and warns:
+
+> "Wiki may be stale — 42 files changed since last compile (2026-04-06). Run /wiki-compile to update."
+
+Set to `"off"` (default) to disable.
 
 ### Scheduled Compilation
 
