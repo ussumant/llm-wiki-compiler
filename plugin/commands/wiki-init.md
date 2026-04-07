@@ -1,92 +1,156 @@
 # Initialize Knowledge Base Wiki
 
-Interactive setup for a new knowledge base wiki in this project.
+Interactive, conversational setup for a new knowledge base wiki. One question at a time, multiple choice when possible.
 
 ## Instructions
 
-### Step 1: Check for existing configuration
+**Important:** Ask ONE question per message. Wait for the user's response before moving to the next question. Never batch multiple questions. Keep the tone conversational — like a knowledgeable colleague setting things up for you.
 
-Look for `.wiki-compiler.json` in the current project root. If it exists, show the current config and ask: "Wiki already configured. Want to reconfigure, or abort?"
+### Step 1: Check for existing config
 
-### Step 2: Auto-detect knowledge directories
+Look for `.wiki-compiler.json` in the current project root. If it exists:
+
+```
+You already have a wiki configured for "{name}" ({topic_count} topics, last compiled {date}).
+
+A) Reconfigure from scratch
+B) Keep current setup (abort)
+```
+
+If B, exit. If A, continue.
+
+### Step 2: Welcome + auto-detect
 
 Scan the project for markdown-heavy directories. Look for:
-- Directories named `Knowledge/`, `docs/`, `notes/`, `content/`
+- Directories named `Knowledge/`, `docs/`, `notes/`, `content/`, `meetings/`, `research/`
 - Any directory containing 10+ `.md` files
 - Exclude: `node_modules/`, `.git/`, `wiki/`, `build/`, `dist/`
 
-Present findings: "I found X markdown files across Y directories:"
-- List each directory with file count
-- Suggest which ones to include as sources
-
-### Step 3: Ask user to confirm sources
-
-Ask the user:
-1. "What's the name for this knowledge base?" (e.g., "My Research", "Project Alpha", "Team Wiki")
-2. "Which directories should I compile from?" (show auto-detected with checkmarks, let them add/remove)
-3. "Where should the wiki output live?" (suggest `{first_source}/wiki/` as default)
-
-### Step 4: Sample source files to understand the domain
-
-From the confirmed source directories:
-1. Pick 10-15 representative `.md` files — spread across different subdirectories for breadth
-2. Read the first ~500 characters + the title (first `#` heading) of each
-3. Note what kinds of content you're seeing: meeting notes? research papers? journal entries? code documentation? strategy docs? personal reflections? technical specs?
-
-This sampling is what makes the article structure fit the actual content, rather than forcing a generic template.
-
-### Step 5: Propose article structure
-
-Based on the sampled files, generate a list of 5-8 article sections that fit the domain. Rules:
-
-- **Always include `Summary` as the first section** — a standalone briefing is universal
-- **Always include `Sources` as the last section** — backlinks to contributing files are always needed
-- **Middle sections are domain-specific** — propose sections that match the content patterns you observed
-- Each section needs a name and a one-line description
-
-Present to the user:
+Present findings conversationally:
 
 ```
-Based on your files, I'd suggest this article structure:
+Welcome to LLM Wiki Compiler. I'll get you set up in about 5 questions.
 
-1. Summary — standalone briefing of the topic
-2. {section} — {description}
-3. {section} — {description}
-...
-N. Sources — backlinks to all contributing files
+I found {count} markdown files across your project:
 
-Want to add, remove, or rename any sections?
+  {dir1}/  — {count} files
+  {dir2}/  — {count} files
+  {dir3}/  — {count} files
+
+Which directories should I compile into your wiki?
+
+A) All of the above (recommended)
+B) Let me pick — show me the list
+C) I'll type the paths myself
 ```
 
-Examples of domain-specific sections the LLM might propose:
-- **Product/growth content:** Timeline, Current State, Key Decisions, Experiments & Results, Gotchas & Known Issues, Open Questions
-- **Research notes:** Key Findings, Methodology, Evidence, Gaps & Contradictions, Open Questions
-- **Personal journal:** Themes & Patterns, Progress, Reflections, Action Items
-- **Book notes:** Characters, Themes, Plot Threads, Connections, Quotes
-- **Technical docs:** Architecture, API Surface, Dependencies, Known Issues, Migration Notes
-- **Business/team:** Stakeholders, Decisions, Action Items, Meeting History, Open Threads
+Wait for response. If B, show checkboxes. If C, ask for paths.
 
-These are guidance for the LLM, not rigid presets — the LLM should generate sections that fit the actual content it sampled.
+### Step 3: Name
 
-If the user wants changes:
-- They can add, remove, or rename sections
-- They can say "regenerate" to get a fresh proposal
-- `Summary` and `Sources` cannot be removed (they are marked `required`)
+```
+Got it, {count} directories selected. What should I call this knowledge base?
 
-### Step 6: Create configuration
+A) "{auto_detected_name}" (based on your project name)
+B) Let me type a name
+```
+
+Wait for response.
+
+### Step 4: Output location
+
+```
+Where should the compiled wiki live?
+
+A) {first_source}/wiki/ (recommended — keeps it near your sources)
+B) docs/wiki/
+C) Let me pick a different path
+```
+
+Wait for response.
+
+### Step 5: Sample files and propose article structure
+
+Now read 10-15 representative `.md` files from the confirmed source directories:
+- Pick files from different subdirectories for breadth
+- Read the first ~500 characters + the title (first `#` heading) of each
+- Note what kinds of content you're seeing
+
+Based on what you found, generate 5-8 article sections that fit the domain. Then present:
+
+```
+I sampled {N} of your files. Looks like you have {description of content types}.
+
+Here's the article structure I'd suggest for your wiki:
+
+  1. Summary — standalone briefing of the topic
+  2. {section} — {description}
+  3. {section} — {description}
+  4. {section} — {description}
+  5. {section} — {description}
+  6. Sources — backlinks to all contributing files
+
+A) Looks good, use this (recommended)
+B) I want to add or remove sections
+C) Regenerate — try a different structure
+```
+
+If B, ask which sections to add/remove/rename. If C, regenerate with different emphasis.
+
+Rules for section generation:
+- **Always include `Summary` first and `Sources` last** — these are universal
+- Middle sections are domain-specific — match the actual content patterns observed
+- Examples of what the LLM might propose by domain:
+  - **Product/growth:** Timeline, Current State, Key Decisions, Experiments & Results, Gotchas, Open Questions
+  - **Research:** Key Findings, Methodology, Evidence, Gaps & Contradictions, Open Questions
+  - **Personal journal:** Themes & Patterns, Progress, Reflections, Action Items
+  - **Book notes:** Characters, Themes, Plot Threads, Connections, Quotes
+  - **Technical docs:** Architecture, API Surface, Dependencies, Known Issues, Migration Notes
+  - **Business/team:** Stakeholders, Decisions, Action Items, Meeting History, Open Threads
+
+### Step 6: Wiki mode
+
+```
+Almost done. How should the wiki integrate with your workflow?
+
+A) Staging — wiki supplements your existing setup, no changes needed (recommended for first-time)
+B) Recommended — Claude reads wiki before raw files
+C) Primary — wiki is the main knowledge source, raw files only for detail
+
+You can change this anytime in .wiki-compiler.json.
+```
+
+Wait for response.
+
+### Step 7: Stale detection
+
+```
+Last question. Want me to warn you when your wiki is out of date?
+
+If source files change after a compile, the plugin can flag it at session start:
+"Wiki may be stale — 12 files changed. Run /wiki-compile to update."
+
+A) Yes, warn me (recommended)
+B) No thanks, I'll compile manually
+```
+
+If A, set `auto_update` to `"prompt"`. If B, set to `"off"`.
+
+### Step 8: Create configuration
 
 Write `.wiki-compiler.json` to the project root:
 
 ```json
 {
   "version": 1,
-  "name": "{user's name}",
+  "name": "{name}",
   "sources": [
     { "path": "{path1}/", "exclude": ["wiki/"] },
     { "path": "{path2}/" }
   ],
   "output": "{output_path}/",
-  "mode": "staging",
+  "mode": "{selected_mode}",
+  "auto_update": "{selected_auto_update}",
   "article_sections": [
     { "name": "Summary", "description": "{description}", "required": true },
     { "name": "{section2}", "description": "{description}" },
@@ -100,33 +164,29 @@ Write `.wiki-compiler.json` to the project root:
 }
 ```
 
-The `article_sections` array captures the user-approved structure from Step 5. Each entry has:
-- `name` — the section heading
-- `description` — what content belongs in this section (guides the compiler)
-- `required` (optional) — if true, cannot be removed by the user. Only Summary and Sources are required.
+### Step 9: Create output directory
 
-### Step 7: Create output directory
-
-Create the output directory structure:
+Create:
 - `{output}/` directory
 - `{output}/topics/` directory
 - `{output}/.compile-state.json` with initial empty state
 - `{output}/compile-log.md` with initial empty log
 
-### Step 8: Summary
+### Step 10: Done
 
-Print:
 ```
 Wiki initialized for "{name}"
-- Sources: {count} directories, ~{file_count} markdown files
-- Output: {output_path}
-- Article structure: {count} sections ({list section names})
-- Mode: staging (wiki supplements existing context)
+
+  Sources:    {count} directories, ~{file_count} markdown files
+  Output:     {output_path}
+  Structure:  {section_count} sections ({section names})
+  Mode:       {mode}
+  Stale warnings: {on/off}
 
 Next steps:
-1. Run /wiki-compile to build your first compilation
-2. Open {output_path}/INDEX.md in Obsidian to browse
-3. Edit article_sections in .wiki-compiler.json anytime to adjust structure
-4. Change mode in .wiki-compiler.json when ready:
-   staging → recommended → primary
+  1. Run /wiki-compile to build your first compilation (5-10 min)
+  2. Open {output_path}/INDEX.md in Obsidian to browse
+  3. After compiling, run /wiki-migrate to switch your AGENTS.md to wiki-first
+
+Edit .wiki-compiler.json anytime to adjust settings.
 ```
