@@ -19,6 +19,8 @@ You have 100+ markdown files across meetings, strategy docs, session notes, and 
 **Before:** Read 13+ raw files (~3,200 lines) per session
 **After:** Read INDEX + 2 topic articles (~330 lines) per session
 
+![Before and After — LLM Wiki Compiler](assets/before-after.png)
+
 ### How It Works
 
 ```mermaid
