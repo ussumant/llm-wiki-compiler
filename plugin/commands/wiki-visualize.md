@@ -10,7 +10,7 @@ Launch an interactive canvas-based knowledge graph of your compiled wiki. Topics
 
 4. Start the visualization server:
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/../visualize/server.js" --wiki-dir "{output_path}"
+   node "${CLAUDE_PLUGIN_ROOT}/visualize/server.js" --wiki-dir "{output_path}"
    ```
 
 5. Open the browser:

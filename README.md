@@ -204,6 +204,21 @@ For monorepos, the compiler detects service boundaries by looking for directorie
 | `deep_scan` | `true` to also read source code files for richer articles |
 | `knowledge_files` | Glob patterns for priority documentation files |
 
+## Knowledge Graph Visualization
+
+See your compiled wiki as an interactive knowledge graph. Topics appear as nodes, concepts as connecting edges.
+
+```bash
+/wiki-visualize
+```
+
+- **Hover** nodes to see source count and highlight connections
+- **Click** a node to read the full article in a side panel
+- **Search** to filter topics by name or alias
+- Canvas-based, zero dependencies, glassmorphism dark UI
+
+Works with both knowledge mode and codebase mode wikis.
+
 ## How It Works (Knowledge Mode)
 
 ### Commands
@@ -217,6 +232,7 @@ For monorepos, the compiler detects service boundaries by looking for directorie
 | `/wiki-lint` | Health checks -- finds stale articles, orphan pages, missing cross-references, contradictions, low coverage |
 | `/wiki-query` | Optional -- Q&A against the wiki. Can file useful answers back into wiki articles. |
 | `/wiki-migrate` | One-time migration -- analyzes your AGENTS.md startup reads, shows which are covered by wiki, generates replacement |
+| `/wiki-visualize` | Launch interactive knowledge graph of your compiled wiki |
 | `/wiki-upgrade` | Update the plugin to the latest version from GitHub |
 
 The primary workflow is: **init → compile → add to AGENTS.md → done.** After that, Claude reads the wiki automatically. `/wiki-query` is a convenience for testing or quick lookups.

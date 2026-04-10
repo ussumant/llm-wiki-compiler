@@ -1,7 +1,7 @@
 {
   "name": "llm-wiki-compiler",
-  "version": "1.0.0",
-  "description": "Compile scattered markdown knowledge files into a topic-based wiki. Non-destructive, Obsidian-compatible, with staged adoption.",
+  "version": "2.0.0",
+  "description": "Compile knowledge files or codebases into topic-based wikis with interactive knowledge graph visualization. Non-destructive, Obsidian-compatible, with staged adoption.",
   "author": {
     "name": "Sumant"
   },
