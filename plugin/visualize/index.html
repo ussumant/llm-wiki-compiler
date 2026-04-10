@@ -4,70 +4,77 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wiki Knowledge Graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-primary: #09090b;
-    --bg-secondary: #0f0f12;
-    --bg-tertiary: #18181b;
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #52525b;
-    --border: rgba(255,255,255,0.06);
-    --accent: #6366f1;
+    /* Nothing Design Tokens */
+    --surface-base: #111111;
+    --surface-raised: #1A1A1A;
+    --text-display: #FFFFFF;
+    --text-primary: #E8E8E8;
+    --text-secondary: #999999;
+    --text-disabled: #666666;
+    --border-subtle: #222222;
+    --border-visible: #333333;
+    --interactive: #5B9BF6;
+    --success: #4A9E5C;
+    --warning: #D4A843;
+
+    --font-body: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+    --font-mono: 'Space Mono', 'SF Mono', monospace;
+    --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    background: var(--bg-primary);
+    background: var(--surface-base);
     color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-body);
     overflow: hidden;
     height: 100vh;
     width: 100vw;
   }
   canvas { display:block; position:absolute; top:0; left:0; }
 
-  /* HUD Elements */
+  /* HUD */
   .hud {
     position: fixed;
     z-index: 10;
-    background: rgba(9,9,11,0.72);
+    background: rgba(17,17,17,0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-subtle);
     border-radius: 12px;
     padding: 14px 18px;
     pointer-events: auto;
   }
-  .hud-stats {
-    top: 20px; left: 20px;
-  }
+  .hud-stats { top: 20px; left: 20px; }
   .hud-stats h1 {
+    font-family: var(--font-body);
     font-size: 15px; font-weight: 500; margin-bottom: 4px;
-    color: var(--text-primary);
-    letter-spacing: -0.2px;
+    color: var(--text-display);
+    letter-spacing: -0.01em;
   }
   .hud-stats .meta {
-    font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px;
-    font-weight: 400;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-disabled);
+    letter-spacing: 0.08em;
   }
 
-  .hud-search {
-    top: 20px; right: 20px;
-  }
+  .hud-search { top: 20px; right: 20px; }
   .hud-search input {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
+    font-family: var(--font-body);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 8px 12px;
     color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 400;
-    width: 200px;
-    outline: none;
-    transition: border-color 0.2s;
+    font-size: 13px; font-weight: 400;
+    width: 200px; outline: none;
+    transition: border-color 200ms var(--ease);
   }
-  .hud-search input::placeholder { color: var(--text-muted); }
-  .hud-search input:focus { border-color: rgba(59,130,246,0.3); }
+  .hud-search input::placeholder { color: var(--text-disabled); }
+  .hud-search input:focus { border-color: var(--border-visible); }
 
   .hud-legend {
     bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -76,95 +83,109 @@
   }
   .legend-item {
     display: flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--text-muted); font-weight: 400;
+    font-family: var(--font-mono);
+    font-size: 10px; color: var(--text-disabled);
+    letter-spacing: 0.04em;
   }
-  .legend-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-  }
+  .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-  /* Article Panel */
+  /* Panel */
   .panel {
-    position: fixed;
-    top: 0; right: 0;
+    position: fixed; top: 0; right: 0;
     width: 440px; height: 100vh;
-    background: rgba(9,9,11,0.94);
+    background: rgba(17,17,17,0.96);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--border-subtle);
     z-index: 20;
     transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 300ms var(--ease);
     overflow-y: auto;
     padding: 28px 24px;
   }
   .panel.open { transform: translateX(0); }
-  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar { width: 3px; }
   .panel::-webkit-scrollbar-track { background: transparent; }
-  .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+  .panel::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
   .panel-close {
     position: absolute; top: 16px; right: 16px;
-    background: none; border: none; color: var(--text-muted);
+    background: none; border: none; color: var(--text-disabled);
     font-size: 18px; cursor: pointer; padding: 4px 8px;
-    border-radius: 6px; transition: all 0.15s;
+    border-radius: 6px; transition: all 150ms var(--ease);
   }
   .panel-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
   .panel h2 {
+    font-family: var(--font-body);
     font-size: 18px; font-weight: 500; margin-bottom: 4px;
-    padding-right: 36px; letter-spacing: -0.3px;
+    padding-right: 36px; letter-spacing: -0.01em;
+    color: var(--text-display);
   }
   .panel .panel-meta {
-    font-size: 11px; color: var(--text-muted); margin-bottom: 24px;
-    letter-spacing: 0.3px; font-weight: 400;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-disabled); margin-bottom: 24px;
+    letter-spacing: 0.08em;
   }
   .panel .section { margin-bottom: 20px; }
   .panel .section-heading {
-    font-size: 12px; font-weight: 500; color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 400; color: var(--text-disabled);
     margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
-    text-transform: uppercase; letter-spacing: 0.5px;
+    text-transform: uppercase; letter-spacing: 0.08em;
   }
   .coverage-badge {
-    font-size: 9px; font-weight: 500; padding: 2px 6px;
-    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 400; padding: 2px 6px;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .coverage-high { background: rgba(34,197,94,0.1); color: #4ade80; }
-  .coverage-medium { background: rgba(234,179,8,0.1); color: #fbbf24; }
+  .coverage-high { background: rgba(74,158,92,0.12); color: var(--success); }
+  .coverage-medium { background: rgba(212,168,67,0.12); color: var(--warning); }
   .coverage-low { background: rgba(239,68,68,0.1); color: #f87171; }
   .panel .section-content {
-    font-size: 13px; line-height: 1.7; color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 13px; line-height: 1.6; color: var(--text-secondary);
     font-weight: 400;
   }
-  .panel .section-content strong { color: var(--text-primary); font-weight: 500; }
+  .panel .section-content strong {
+    color: var(--text-primary); font-weight: 500;
+  }
   .panel .section-content code {
-    background: rgba(255,255,255,0.05); padding: 1px 5px;
-    border-radius: 3px; font-size: 12px; color: #93c5fd;
+    font-family: var(--font-mono);
+    background: rgba(255,255,255,0.04); padding: 1px 5px;
+    border-radius: 3px; font-size: 11px; color: var(--interactive);
   }
   .panel .section-content li { margin-bottom: 5px; }
   .panel .section-content ul { padding-left: 16px; list-style: none; }
   .panel .section-content ul li::before {
     content: ''; display: inline-block;
-    width: 4px; height: 4px; border-radius: 50%;
-    background: var(--text-muted); margin-right: 8px;
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--text-disabled); margin-right: 8px;
     vertical-align: middle; position: relative; top: -1px;
   }
 
   /* Tooltip */
   .tooltip {
     position: fixed; z-index: 30;
-    background: rgba(15,15,18,0.96);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-visible);
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 12px;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.12s;
+    transition: opacity 150ms var(--ease);
     max-width: 260px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   }
   .tooltip.visible { opacity: 1; }
-  .tooltip .tt-name { font-weight: 500; color: var(--text-primary); margin-bottom: 2px; font-size: 13px; }
-  .tooltip .tt-detail { color: var(--text-muted); font-size: 11px; font-weight: 400; }
+  .tooltip .tt-name {
+    font-family: var(--font-body);
+    font-weight: 500; color: var(--text-display);
+    margin-bottom: 2px; font-size: 13px;
+  }
+  .tooltip .tt-detail {
+    font-family: var(--font-mono);
+    color: var(--text-disabled); font-size: 10px;
+    letter-spacing: 0.04em;
+  }
 </style>
 </head>
 <body>
@@ -200,21 +221,25 @@ const ctx = canvas.getContext('2d');
 const tooltip = document.getElementById('tooltip');
 const panel = document.getElementById('panel');
 
-// Muted intelligence palette — blue/violet/indigo weighted
+// Muted palette — blue/violet weighted, Nothing-aligned
 const PALETTE = [
-  '#3b82f6', // blue-500
-  '#8b5cf6', // violet-500
-  '#6366f1', // indigo-500
-  '#06b6d4', // cyan-500
-  '#14b8a6', // teal-500
-  '#f59e0b', // amber-500
-  '#ec4899', // pink-500
-  '#8b5cf6', // violet-500
-  '#0ea5e9', // sky-500
-  '#a855f7', // purple-500
-  '#10b981', // emerald-500
-  '#f43f5e', // rose-500
+  '#5B9BF6', // interactive blue
+  '#8b5cf6', // violet
+  '#6366f1', // indigo
+  '#06b6d4', // cyan
+  '#4A9E5C', // success green
+  '#D4A843', // warning amber
+  '#ec4899', // pink
+  '#0ea5e9', // sky
+  '#a855f7', // purple
+  '#14b8a6', // teal
+  '#10b981', // emerald
+  '#f43f5e', // rose
 ];
+
+// Font strings for canvas
+const FONT_BODY = "'Space Grotesk', -apple-system, system-ui, sans-serif";
+const FONT_MONO = "'Space Mono', 'SF Mono', monospace";
 
 let W, H, centerX, centerY;
 let nodes = [];
@@ -225,20 +250,17 @@ let hoveredNode = null;
 let hoveredEdge = null;
 let selectedNode = null;
 let searchQuery = '';
-let animFrame;
 
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
   centerX = W / 2;
   centerY = H / 2;
-  if (panel.classList.contains('open')) {
-    centerX = (W - 440) / 2;
-  }
+  if (panel.classList.contains('open')) centerX = (W - 440) / 2;
   layoutNodes();
 }
 
-// --- Data Loading ---
+// --- Data ---
 
 async function loadData() {
   const res = await fetch('/api/graph');
@@ -246,7 +268,7 @@ async function loadData() {
 
   document.getElementById('wikiName').textContent = graphData.name;
   document.getElementById('wikiMeta').textContent =
-    `${graphData.topics.length} topics · ${graphData.totalSources || '?'} sources`;
+    `${graphData.topics.length} TOPICS · ${graphData.totalSources || '?'} SOURCES`;
 
   nodes = graphData.topics.map((t, i) => ({
     slug: t.slug,
@@ -255,17 +277,13 @@ async function loadData() {
     sourceCount: t.sourceCount,
     color: PALETTE[i % PALETTE.length],
     radius: Math.min(12 + Math.sqrt(t.sourceCount) * 4.5, 48),
-    scale: 1,
-    targetScale: 1,
+    scale: 1, targetScale: 1,
     angle: 0, targetDist: 0,
     x: centerX, y: centerY,
     targetX: centerX, targetY: centerY
   }));
 
-  edges = graphData.edges.map(e => ({
-    from: e.from, to: e.to, concept: e.concept
-  }));
-
+  edges = graphData.edges.map(e => ({ from: e.from, to: e.to, concept: e.concept }));
   concepts = graphData.concepts;
 
   const legend = document.getElementById('legend');
@@ -291,7 +309,6 @@ function layoutNodes() {
     if (connCount[e.to] !== undefined) connCount[e.to]++;
   });
   const maxConn = Math.max(...Object.values(connCount), 1);
-
   const angleStep = (2 * Math.PI) / nodes.length;
 
   nodes.forEach((n, i) => {
@@ -303,7 +320,7 @@ function layoutNodes() {
   });
 }
 
-// --- Animation ---
+// --- Render ---
 
 function animate() {
   ctx.clearRect(0, 0, W, H);
@@ -318,52 +335,50 @@ function animate() {
     n.scale += (n.targetScale - n.scale) * 0.12;
   });
 
-  animFrame = requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 }
 
 function drawBackground() {
   const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(W, H) * 0.55);
-  grad.addColorStop(0, '#0c0c10');
-  grad.addColorStop(0.5, '#0a0a0e');
-  grad.addColorStop(1, '#09090b');
+  grad.addColorStop(0, '#141414');
+  grad.addColorStop(0.5, '#121212');
+  grad.addColorStop(1, '#111111');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 }
 
 function drawCenter() {
-  // Soft glow ring
-  const cGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 50);
-  cGrad.addColorStop(0, 'rgba(59,130,246,0.05)');
-  cGrad.addColorStop(0.6, 'rgba(59,130,246,0.02)');
-  cGrad.addColorStop(1, 'rgba(59,130,246,0)');
+  const cGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 45);
+  cGrad.addColorStop(0, 'rgba(91,155,246,0.04)');
+  cGrad.addColorStop(1, 'rgba(91,155,246,0)');
   ctx.fillStyle = cGrad;
   ctx.beginPath();
-  ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, 45, 0, Math.PI * 2);
   ctx.fill();
 
-  // Center dot
-  ctx.fillStyle = 'rgba(59,130,246,0.25)';
+  ctx.fillStyle = 'rgba(91,155,246,0.2)';
   ctx.beginPath();
-  ctx.arc(centerX, centerY, 2.5, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function drawEdges() {
-  edges.forEach(e => {
+  edges.forEach((e, idx) => {
     const fromNode = nodes.find(n => n.slug === e.from);
     const toNode = nodes.find(n => n.slug === e.to);
     if (!fromNode || !toNode) return;
 
-    const isHovered = hoveredEdge === e ||
-      (hoveredNode && (hoveredNode.slug === e.from || hoveredNode.slug === e.to));
+    const isDirectHover = hoveredEdge === e;
+    const isNodeHover = hoveredNode && (hoveredNode.slug === e.from || hoveredNode.slug === e.to);
+    const isHighlighted = isDirectHover || isNodeHover;
     const isSearchDimmed = searchQuery &&
       !fromNode.name.toLowerCase().includes(searchQuery) &&
       !toNode.name.toLowerCase().includes(searchQuery);
 
     ctx.save();
-    ctx.globalAlpha = isSearchDimmed ? 0.02 : (isHovered ? 0.4 : 0.06);
-    ctx.strokeStyle = isHovered ? '#3b82f6' : 'rgba(59,130,246,0.5)';
-    ctx.lineWidth = isHovered ? 1.5 : 0.8;
+    ctx.globalAlpha = isSearchDimmed ? 0.02 : (isHighlighted ? 0.35 : 0.05);
+    ctx.strokeStyle = isHighlighted ? '#5B9BF6' : '#5B9BF6';
+    ctx.lineWidth = isHighlighted ? 1.2 : 0.6;
 
     // Curved edge
     const mx = (fromNode.x + toNode.x) / 2;
@@ -378,32 +393,39 @@ function drawEdges() {
     ctx.quadraticCurveTo(cpx, cpy, toNode.x, toNode.y);
     ctx.stroke();
 
-    // Edge label on hover — pill background for readability
-    if (isHovered) {
+    // Edge label — ONLY for directly hovered edge, not all edges of hovered node
+    if (isDirectHover) {
       const concept = concepts.find(c => c.slug === e.concept);
       if (concept) {
-        const lx = (fromNode.x + cpx + toNode.x) / 3;
-        const ly = (fromNode.y + cpy + toNode.y) / 3;
+        // Position label at curve midpoint, offset away from nearest node
+        const t = 0.5;
+        const lx = (1-t)*(1-t)*fromNode.x + 2*(1-t)*t*cpx + t*t*toNode.x;
+        const ly = (1-t)*(1-t)*fromNode.y + 2*(1-t)*t*cpy + t*t*toNode.y;
+
+        // Perpendicular offset to avoid overlapping the line
+        const len = Math.sqrt(dx*dx + dy*dy) || 1;
+        const nx = -dy / len * 16;
+        const ny = dx / len * 16;
+        const labelX = lx + nx;
+        const labelY = ly + ny;
+
         ctx.globalAlpha = 1;
-        ctx.font = '500 10px -apple-system, system-ui, sans-serif';
+        ctx.font = `400 10px ${FONT_MONO}`;
         ctx.textAlign = 'center';
         const textW = ctx.measureText(concept.name).width;
-        // Dark pill behind text
-        ctx.fillStyle = 'rgba(9,9,11,0.85)';
+
+        // Pill background
         const px = 8, py = 4;
-        const rx = lx - textW / 2 - px;
-        const ry = ly - 6 - py - 4;
-        const rw = textW + px * 2;
-        const rh = 12 + py * 2;
+        ctx.fillStyle = 'rgba(17,17,17,0.92)';
         ctx.beginPath();
-        ctx.roundRect(rx, ry, rw, rh, 4);
+        ctx.roundRect(labelX - textW/2 - px, labelY - 7 - py, textW + px*2, 14 + py*2, 4);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(59,130,246,0.2)';
+        ctx.strokeStyle = '#333333';
         ctx.lineWidth = 0.5;
         ctx.stroke();
-        // Text
-        ctx.fillStyle = '#d4d4d8';
-        ctx.fillText(concept.name, lx, ly - 4);
+
+        ctx.fillStyle = '#E8E8E8';
+        ctx.fillText(concept.name, labelX, labelY);
       }
     }
     ctx.restore();
@@ -416,94 +438,92 @@ function drawNodes() {
   nodes.forEach(n => {
     const isHovered = hoveredNode === n;
     const isSelected = selectedNode === n;
-    const isSearchMatch = !searchQuery || n.name.toLowerCase().includes(searchQuery) ||
-      (n.aliases && n.aliases.toLowerCase().includes(searchQuery));
     const isConnected = hoveredNode && edges.some(
       e => (e.from === hoveredNode.slug && e.to === n.slug) ||
            (e.to === hoveredNode.slug && e.from === n.slug)
     );
+    const isSearchMatch = !searchQuery || n.name.toLowerCase().includes(searchQuery) ||
+      (n.aliases && n.aliases.toLowerCase().includes(searchQuery));
 
-    // Scale animation target
     n.targetScale = isHovered ? 1.15 : 1;
 
     ctx.save();
 
     if (searchQuery && !isSearchMatch) {
-      ctx.globalAlpha = 0.08;
+      ctx.globalAlpha = 0.06;
     } else if (hoveredNode && !isHovered && !isConnected) {
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.2;
     } else {
       ctx.globalAlpha = 1;
     }
 
     const r = n.radius * n.scale;
 
-    // Outer glow (subtle, war-room style)
+    // Outer glow
     if (isHovered || isSelected) {
-      const glowGrad = ctx.createRadialGradient(n.x, n.y, r, n.x, n.y, r * 2);
-      glowGrad.addColorStop(0, hexAlpha(n.color, 0.12));
+      const glowGrad = ctx.createRadialGradient(n.x, n.y, r, n.x, n.y, r * 1.8);
+      glowGrad.addColorStop(0, hexAlpha(n.color, 0.1));
       glowGrad.addColorStop(1, hexAlpha(n.color, 0));
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(n.x, n.y, r * 2, 0, Math.PI * 2);
+      ctx.arc(n.x, n.y, r * 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Node fill — radial gradient: color20 → color08 (per spec)
-    const fillGrad = ctx.createRadialGradient(n.x - r * 0.2, n.y - r * 0.2, 0, n.x, n.y, r);
-    fillGrad.addColorStop(0, hexAlpha(n.color, 0.25));
-    fillGrad.addColorStop(0.7, hexAlpha(n.color, 0.12));
-    fillGrad.addColorStop(1, hexAlpha(n.color, 0.06));
+    // Node fill — radial gradient (Nothing style: color20 → color06)
+    const fillGrad = ctx.createRadialGradient(n.x - r * 0.15, n.y - r * 0.15, 0, n.x, n.y, r);
+    fillGrad.addColorStop(0, hexAlpha(n.color, 0.22));
+    fillGrad.addColorStop(0.6, hexAlpha(n.color, 0.1));
+    fillGrad.addColorStop(1, hexAlpha(n.color, 0.05));
     ctx.fillStyle = fillGrad;
     ctx.beginPath();
     ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hairline stroke (per spec: 0.8px default, 1.5px hover)
-    ctx.strokeStyle = hexAlpha(n.color, isHovered ? 0.7 : 0.35);
+    // Hairline stroke
+    ctx.strokeStyle = hexAlpha(n.color, isHovered ? 0.6 : 0.3);
     ctx.lineWidth = isHovered ? 1.5 : 0.8;
     ctx.stroke();
 
     // Pulse ring for selected
     if (isSelected) {
       const pulseR = r + 4 + Math.sin(time * 0.003) * 3;
-      ctx.strokeStyle = hexAlpha(n.color, 0.2 + Math.sin(time * 0.003) * 0.1);
+      ctx.strokeStyle = hexAlpha(n.color, 0.15 + Math.sin(time * 0.003) * 0.08);
       ctx.lineWidth = 0.8;
       ctx.beginPath();
       ctx.arc(n.x, n.y, pulseR, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Label — clear on hover, muted at rest
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
+    // --- Labels with dark halo for separation ---
+
+    // Node name label
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
     if (isHovered || isSelected) {
-      // White text with subtle dark halo for readability
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '600 13px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `500 12px ${FONT_BODY}`;
     } else {
-      ctx.fillStyle = isConnected ? '#d4d4d8' : '#a1a1aa';
-      ctx.font = '400 11px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = isConnected ? '#E8E8E8' : '#999999';
+      ctx.font = `400 11px ${FONT_BODY}`;
     }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(n.name, n.x, n.y + r + 10);
+    ctx.fillText(n.name, n.x, n.y + r + 12);
     ctx.shadowBlur = 0;
 
-    // Source count inside node
+    // Source count inside node (Space Mono)
     if (r > 16) {
-      ctx.fillStyle = isHovered ? '#ffffff' : hexAlpha(n.color, 0.7);
-      ctx.font = `${isHovered ? '600' : '500'} ${isHovered ? '12' : '10'}px -apple-system, system-ui, sans-serif`;
+      ctx.fillStyle = isHovered ? '#FFFFFF' : hexAlpha(n.color, 0.65);
+      ctx.font = `${isHovered ? '700' : '400'} ${isHovered ? '12' : '10'}px ${FONT_MONO}`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.fillText(n.sourceCount, n.x, n.y);
     }
 
-    // Spoke to center (very faint)
-    ctx.globalAlpha *= 0.03;
-    ctx.strokeStyle = hexAlpha(n.color, 0.3);
+    // Spoke to center
+    ctx.globalAlpha *= 0.025;
+    ctx.strokeStyle = hexAlpha(n.color, 0.25);
     ctx.lineWidth = 0.5;
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
@@ -534,6 +554,8 @@ canvas.addEventListener('mousemove', (e) => {
   }
 
   if (!found) {
+    // Find closest edge midpoint within threshold
+    let minDist = 35;
     for (const edge of edges) {
       const fromN = nodes.find(n => n.slug === edge.from);
       const toN = nodes.find(n => n.slug === edge.to);
@@ -541,25 +563,25 @@ canvas.addEventListener('mousemove', (e) => {
       const emx = (fromN.x + toN.x) / 2;
       const emy = (fromN.y + toN.y) / 2;
       const dist = Math.sqrt((mx - emx) ** 2 + (my - emy) ** 2);
-      if (dist < 30) { foundEdge = edge; break; }
+      if (dist < minDist) { minDist = dist; foundEdge = edge; }
     }
   }
 
   hoveredNode = found;
-  hoveredEdge = foundEdge;
+  hoveredEdge = found ? null : foundEdge; // Node takes priority
   canvas.style.cursor = (found || foundEdge) ? 'pointer' : 'default';
 
   if (found) {
     document.getElementById('ttName').textContent = found.name;
     document.getElementById('ttDetail').textContent =
-      `${found.sourceCount} sources · Click to read`;
+      `${found.sourceCount} sources · click to read`;
     tooltip.style.left = (mx + 16) + 'px';
     tooltip.style.top = (my - 10) + 'px';
     tooltip.classList.add('visible');
   } else if (foundEdge) {
     const concept = concepts.find(c => c.slug === foundEdge.concept);
     document.getElementById('ttName').textContent = concept ? concept.name : foundEdge.concept;
-    document.getElementById('ttDetail').textContent = 'Click to read concept';
+    document.getElementById('ttDetail').textContent = 'click to read concept';
     tooltip.style.left = (mx + 16) + 'px';
     tooltip.style.top = (my - 10) + 'px';
     tooltip.classList.add('visible');
@@ -588,7 +610,7 @@ async function openArticle(type, slug) {
 
   document.getElementById('panelTitle').textContent = article.title;
   document.getElementById('panelMeta').textContent =
-    `${article.meta.source_count || '?'} sources · ${article.meta.last_compiled || ''}`;
+    `${article.meta.source_count || '?'} SOURCES · ${article.meta.last_compiled || ''}`;
 
   const content = document.getElementById('panelContent');
   content.innerHTML = article.sections.map(s => {
@@ -620,13 +642,11 @@ function closePanel() {
 }
 
 document.getElementById('panelClose').addEventListener('click', closePanel);
-
-// Escape to close panel
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
 });
 
-// --- Simple Markdown to HTML ---
+// --- Markdown → HTML ---
 
 function markdownToHtml(md) {
   return md
@@ -638,19 +658,17 @@ function markdownToHtml(md) {
     .replace(/<\/ul>\s*<ul>/g, '')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="#" style="color:#60a5fa;text-decoration:none">$1</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="#" style="color:#5B9BF6;text-decoration:none">$1</a>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
 }
 
 // --- Search ---
-
 document.getElementById('searchInput').addEventListener('input', (e) => {
   searchQuery = e.target.value.toLowerCase();
 });
 
 // --- Init ---
-
 window.addEventListener('resize', resize);
 resize();
 loadData();
