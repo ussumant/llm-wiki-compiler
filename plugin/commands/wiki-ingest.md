@@ -8,7 +8,7 @@ Interactive workflow for adding one source file to the wiki. The LLM reads the f
 
 - Read `.wiki-compiler.json` from the project root (or nearest parent directory). If not found, tell the user to run `/wiki-init` first.
 - Accept one argument: the file path to ingest (e.g., `/wiki-ingest Knowledge/meetings/2026-04-07-standup.md`)
-- If no argument provided, ask: "Which file would you like to ingest?"
+3. Store converted to markdown files as original page name but with `.md` extension.
 - Verify the file exists and is a `.md` file
 - Check that the file is within one of the configured `sources[]` directories (warn if not, but allow it)
 
