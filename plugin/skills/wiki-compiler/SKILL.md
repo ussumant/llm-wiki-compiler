@@ -19,6 +19,8 @@ Before running, read `.wiki-compiler.json` from the project root to get:
 - `topic_hints[]` — optional seed topics from the user
 - `link_style` — "obsidian" (default) or "markdown"
 
+**Note:** Sources don't have to live alongside the project. `/fetch-bookmarks <source>` can pull content from external services (X bookmarks today; Readwise, Pocket, GitHub stars planned) into a local directory that appears in `sources[]` alongside everything else.
+
 **Codebase mode additional config:**
 - `service_discovery` — "auto" (detect monorepo vs single project) or "manual"
 - `knowledge_files[]` — glob patterns for priority documentation files (README.md, CLAUDE.md, etc.)

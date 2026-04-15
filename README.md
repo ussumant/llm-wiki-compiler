@@ -236,6 +236,49 @@ node plugin/visualize/server.js --wiki-dir path/to/wiki/
 # Open http://localhost:3848
 ```
 
+## Fetch from External Sources
+
+Your context isn't always on disk — a lot of it lives in services like X bookmarks, Readwise highlights, or Pocket saves. `/fetch-bookmarks <source>` pulls that content into a local directory that `/wiki-compile` can consume alongside your regular sources.
+
+Optional — skip it entirely if all your sources are already local markdown.
+
+### Quick Start
+
+```bash
+/fetch-bookmarks x
+```
+
+First run walks you through:
+
+1. Checking that Node.js 20+ is installed
+2. Installing [Field Theory CLI](https://github.com/afar1/fieldtheory-cli) (MIT-licensed, free) globally via npm — one consent prompt
+3. Syncing your X bookmarks using Chrome cookie auth (no X API key needed)
+4. Adding `~/.ft-bookmarks/md/` to your `.wiki-compiler.json` sources
+
+After that, `/fetch-bookmarks x` just resyncs. Run `/wiki-compile` whenever you want bookmarks folded into topic articles.
+
+### Available Sources
+
+| Source | Status | Backend |
+|--------|--------|---------|
+| `x` | Shipped | [Field Theory CLI](https://github.com/afar1/fieldtheory-cli) (MIT) |
+| `readwise` | Planned | TBD |
+| `pocket` | Planned | TBD |
+| `github-stars` | Planned | TBD |
+
+### How It Works
+
+`/fetch-bookmarks` is a thin dispatcher. Each source has its own adapter at `plugin/skills/wiki-compiler/adapters/<source>.md` that handles dependency checks, auth, sync, and wiring the output directory into your wiki config. Adapters delegate to existing open-source tools rather than reimplementing fetch logic — so you get a stable plugin surface (`/fetch-bookmarks x`) while the heavy lifting is maintained upstream.
+
+### Requirements
+
+- **Node.js 20+** (for Field Theory CLI)
+- **Chrome** (for first-time X cookie sync — this is a Field Theory CLI limitation)
+
+### Contributing a New Adapter
+
+Copy `plugin/skills/wiki-compiler/adapters/x.md` and follow the contract documented in `plugin/commands/fetch-bookmarks.md`: preflight, consent, sync, markdown output, wire into `sources[]`, suggest compile.
+
 ## How It Works (Knowledge Mode)
 
 ### Commands
@@ -245,6 +288,7 @@ node plugin/visualize/server.js --wiki-dir path/to/wiki/
 | `/wiki-init` | One-time setup -- auto-detects markdown directories, samples files, proposes custom article structure |
 | `/wiki-compile` | Compiles source files into topic articles (incremental -- only recompiles changes). Generates `schema.md` on first run. |
 | `/wiki-ingest` | Add a single source interactively -- read, discuss key takeaways, update relevant wiki articles |
+| `/fetch-bookmarks` | Pull bookmarks from external services (X today; Readwise, Pocket planned) into a local directory that `/wiki-compile` can consume |
 | `/wiki-search` | Search across wiki articles by keyword or phrase |
 | `/wiki-lint` | Health checks -- finds stale articles, orphan pages, missing cross-references, contradictions, low coverage |
 | `/wiki-query` | Optional -- Q&A against the wiki. Can file useful answers back into wiki articles. |
