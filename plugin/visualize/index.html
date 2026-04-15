@@ -62,6 +62,32 @@
   }
 
   .hud-search { top: 20px; right: 20px; }
+
+  .hud-expansion {
+    top: 72px; right: 20px;
+    display: none;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--text-disabled);
+  }
+  .hud-expansion.visible { display: block; }
+  .hud-expansion .count { color: var(--text-primary); font-weight: 700; }
+  .hud-expansion button {
+    margin-left: 10px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-disabled);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+  .hud-expansion button:hover { color: var(--text-primary); border-color: var(--border-visible); }
+
   .hud-search input {
     font-family: var(--font-body);
     background: rgba(255,255,255,0.03);
@@ -201,6 +227,11 @@
   <input type="text" id="searchInput" placeholder="Search topics..." autocomplete="off">
 </div>
 
+<div class="hud hud-expansion" id="hudExpansion">
+  EXPANSION: <span class="count" id="expansionCount">0</span> NODES · <span id="expansionSeeds">0</span> SEEDS
+  <button id="expansionReset">RESET</button>
+</div>
+
 <div class="hud hud-legend" id="legend"></div>
 
 <div class="panel" id="panel">
@@ -251,6 +282,11 @@ let hoveredEdge = null;
 let selectedNode = null;
 let searchQuery = '';
 
+// Multi-hop expansion state
+let adjacency = {};            // slug -> Set<slug>
+let expandedSet = new Set();   // slugs currently lit
+let seedHistory = [];          // chronological shift-clicks (seeds)
+
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
@@ -288,6 +324,14 @@ async function loadData() {
 
   edges = graphData.edges.map(e => ({ from: e.from, to: e.to, concept: e.concept }));
   concepts = graphData.concepts;
+
+  // Build adjacency map for multi-hop expansion
+  adjacency = {};
+  nodes.forEach(n => { adjacency[n.slug] = new Set(); });
+  edges.forEach(e => {
+    if (adjacency[e.from]) adjacency[e.from].add(e.to);
+    if (adjacency[e.to]) adjacency[e.to].add(e.from);
+  });
 
   const legend = document.getElementById('legend');
   legend.innerHTML = nodes.map(n =>
@@ -377,9 +421,12 @@ function drawEdges() {
     const isSearchDimmed = searchQuery &&
       !fromNode.name.toLowerCase().includes(searchQuery) &&
       !toNode.name.toLowerCase().includes(searchQuery);
+    // In expansion mode, an edge is lit only when both endpoints are in the expanded set.
+    const isExpansionDimmed = expandedSet.size > 0 &&
+      !(expandedSet.has(e.from) && expandedSet.has(e.to));
 
     ctx.save();
-    ctx.globalAlpha = isSearchDimmed ? 0.02 : (isHighlighted ? 0.35 : 0.05);
+    ctx.globalAlpha = (isSearchDimmed || isExpansionDimmed) ? 0.02 : (isHighlighted ? 0.35 : 0.05);
     ctx.strokeStyle = isHighlighted ? '#5B9BF6' : '#5B9BF6';
     ctx.lineWidth = isHighlighted ? 1.2 : 0.6;
 
@@ -447,13 +494,18 @@ function drawNodes() {
     );
     const isSearchMatch = !searchQuery || n.name.toLowerCase().includes(searchQuery) ||
       (n.aliases && n.aliases.toLowerCase().includes(searchQuery));
+    // In expansion mode, a node is lit when it's in the expanded set.
+    const isExpansionDimmed = expandedSet.size > 0 && !expandedSet.has(n.slug);
+    const isSeed = seedHistory.includes(n.slug);
 
-    n.targetScale = isHovered ? 1.15 : 1;
+    n.targetScale = isHovered ? 1.15 : (isSeed ? 1.08 : 1);
 
     ctx.save();
 
     if (searchQuery && !isSearchMatch) {
       ctx.globalAlpha = 0.06;
+    } else if (isExpansionDimmed) {
+      ctx.globalAlpha = 0.12;
     } else if (hoveredNode && !isHovered && !isConnected) {
       ctx.globalAlpha = 0.2;
     } else {
@@ -593,7 +645,12 @@ canvas.addEventListener('mousemove', (e) => {
   }
 });
 
-canvas.addEventListener('click', async () => {
+canvas.addEventListener('click', async (evt) => {
+  // Shift-click on a node → expand neighborhood (multi-hop)
+  if (evt.shiftKey && hoveredNode) {
+    expandFromSeed(hoveredNode.slug);
+    return;
+  }
   if (hoveredNode) {
     selectedNode = hoveredNode;
     await openArticle('topic', hoveredNode.slug);
@@ -603,6 +660,33 @@ canvas.addEventListener('click', async () => {
     closePanel();
   }
 });
+
+// --- Multi-hop expansion ---
+
+function expandFromSeed(slug) {
+  if (!adjacency[slug]) return;
+  expandedSet.add(slug);
+  adjacency[slug].forEach(n => expandedSet.add(n));
+  seedHistory.push(slug);
+  renderExpansionHUD();
+}
+
+function clearExpansion() {
+  expandedSet = new Set();
+  seedHistory = [];
+  renderExpansionHUD();
+}
+
+function renderExpansionHUD() {
+  const hud = document.getElementById('hudExpansion');
+  if (expandedSet.size === 0) {
+    hud.classList.remove('visible');
+    return;
+  }
+  document.getElementById('expansionCount').textContent = expandedSet.size;
+  document.getElementById('expansionSeeds').textContent = seedHistory.length;
+  hud.classList.add('visible');
+}
 
 // --- Panel ---
 
@@ -645,8 +729,14 @@ function closePanel() {
 }
 
 document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('expansionReset').addEventListener('click', clearExpansion);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+  if (e.key !== 'Escape') return;
+  if (panel.classList.contains('open')) {
+    closePanel();
+  } else if (expandedSet.size > 0) {
+    clearExpansion();
+  }
 });
 
 // --- Markdown → HTML ---
