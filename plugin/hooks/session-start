@@ -1,134 +1,27 @@
 #!/usr/bin/env bash
-# SessionStart hook for llm-wiki-compiler plugin
-# Detects .wiki-compiler.json and injects wiki context based on mode
+# Claude SessionStart wrapper for llm-wiki-compiler.
 
 set -euo pipefail
 
-# Walk up from $PWD to find .wiki-compiler.json
-config_file=""
-dir="$PWD"
-while [ "$dir" != "/" ]; do
-  if [ -f "$dir/.wiki-compiler.json" ]; then
-    config_file="$dir/.wiki-compiler.json"
-    break
-  fi
-  dir="$(dirname "$dir")"
-done
+plugin_root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+context="$("$plugin_root/hooks/wiki-session-context" "$PWD")"
 
-# No config found — exit silently (plugin installed but project has no wiki)
-if [ -z "$config_file" ]; then
+if [ -z "$context" ]; then
   exit 0
 fi
 
-project_root="$(dirname "$config_file")"
-
-# Read config values using node
-output_path=$(node -e "const c=require('$config_file'); console.log(c.output || '')")
-mode=$(node -e "const c=require('$config_file'); console.log(c.mode || 'staging')")
-name=$(node -e "const c=require('$config_file'); console.log(c.name || 'Project')")
-wiki_mode=$(node -e "const c=require('$config_file'); console.log(c.mode === 'codebase' ? 'codebase' : 'knowledge')" 2>/dev/null || echo "knowledge")
-
-if [ -z "$output_path" ]; then
-  exit 0
-fi
-
-index_file="$project_root/$output_path/INDEX.md"
-state_file="$project_root/$output_path/.compile-state.json"
-
-# Escape string for JSON embedding
 escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
 }
 
-if [ ! -f "$index_file" ]; then
-  context="[Wiki Compiler] Wiki configured for \"$name\" but not yet compiled. Run /wiki-compile to build your knowledge base."
-else
-  topic_count=$(node -e "const s=require('$state_file'); console.log((s.topics||[]).length)" 2>/dev/null || echo "?")
-  last_compiled=$(node -e "const s=require('$state_file'); console.log(s.last_compiled || 'unknown')" 2>/dev/null || echo "unknown")
-  auto_update=$(node -e "const c=require('$config_file'); console.log(c.auto_update || 'off')" 2>/dev/null || echo "off")
+escaped_context="$(escape_for_json "$context")"
 
-  # Stale detection: count source files changed since last compile
-  stale_warning=""
-  bookmark_count=0
-  if [ "$auto_update" = "prompt" ] && [ "$last_compiled" != "unknown" ]; then
-    sources_json=$(node -e "const c=require('$config_file'); (c.sources||[]).forEach(s => console.log(s.path))" 2>/dev/null)
-    changed_count=0
-    while IFS= read -r src_path; do
-      if [ -z "$src_path" ]; then continue; fi
-      # Expand tilde paths for external source dirs like ~/.ft-bookmarks/md/bookmarks/
-      if [[ "$src_path" == ~/* || "$src_path" == "~" ]]; then
-        resolved_path="${src_path/#\~/$HOME}"
-      else
-        resolved_path="$project_root/$src_path"
-      fi
-      if [ -d "$resolved_path" ]; then
-        # Create a reference file with the last_compiled date
-        ref_file=$(mktemp)
-        touch -t "$(echo "$last_compiled" | sed 's/-//g')0000" "$ref_file" 2>/dev/null
-        if [ "$wiki_mode" = "codebase" ]; then
-          # Codebase mode: watch knowledge files + key source files, not just .md
-          count=$(find "$resolved_path" \
-            \( -name "README.md" -o -name "CLAUDE.md" -o -name "AGENTS.md" -o -name "ARCHITECTURE.md" \
-               -o -name "CONTRIBUTING.md" -o -name "CHANGELOG.md" \
-               -o -name "*.proto" -o -name "*.graphql" \
-               -o -name "openapi.yaml" -o -name "openapi.json" \
-               -o -name "ADR-*.md" \
-               -o -name "docker-compose.yml" -o -name "Dockerfile" \
-               -o -name ".env.example" \
-               -o -name "package.json" -o -name "go.mod" -o -name "Cargo.toml" -o -name "pyproject.toml" \) \
-            -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/dist/*" \
-            -not -path "*/vendor/*" -not -path "*/__pycache__/*" -not -path "*/.build/*" \
-            -newer "$ref_file" 2>/dev/null | wc -l | tr -d ' ')
-        else
-          # Knowledge mode: watch .md files
-          count=$(find "$resolved_path" -name "*.md" -newer "$ref_file" 2>/dev/null | wc -l | tr -d ' ')
-        fi
-        changed_count=$((changed_count + count))
-        # Track bookmark-dir changes separately for a nicer message
-        if [[ "$src_path" == *ft-bookmarks* || "$src_path" == *bookmarks/* ]]; then
-          bookmark_count=$((bookmark_count + count))
-        fi
-        rm -f "$ref_file"
-      fi
-    done <<< "$sources_json"
-
-    if [ "$changed_count" -gt 0 ]; then
-      if [ "$bookmark_count" -gt 0 ] && [ "$bookmark_count" -eq "$changed_count" ]; then
-        stale_warning="\n\n📎 $bookmark_count new bookmark(s) since last compile ($last_compiled). Run /wiki-compile to fold them into topics."
-      elif [ "$bookmark_count" -gt 0 ]; then
-        other=$((changed_count - bookmark_count))
-        stale_warning="\n\n⚠️ Wiki may be stale — $bookmark_count new bookmark(s) + $other other file(s) changed since last compile ($last_compiled). Run /wiki-compile to update."
-      else
-        stale_warning="\n\n⚠️ Wiki may be stale — $changed_count files changed since last compile ($last_compiled). Run /wiki-compile to update."
-      fi
-    fi
-  fi
-
-  case "$mode" in
-    staging)
-      context="[Wiki Compiler] A compiled knowledge wiki is available for \"$name\".\nLocation: $output_path\nTopics: $topic_count | Last compiled: $last_compiled\nMode: staging (supplements existing context)\n\nWhen you need deep context on a topic, read ${output_path}INDEX.md to see available topics, then read specific topic articles. This wiki synthesizes source files into topic-based briefings — reading one topic article replaces reading 10-20 raw files.\n\nWiki articles are read-only synthesis. Never modify wiki/ files directly — they are regenerated by /wiki-compile.${stale_warning}"
-      ;;
-    recommended)
-      context="[Wiki Compiler] \"$name\" knowledge wiki active.\nLocation: $output_path\nTopics: $topic_count | Last compiled: $last_compiled\nMode: recommended\n\nFor project context, start with ${output_path}INDEX.md. Read topic articles before reading raw source files. Fall back to raw sources only when the wiki article is insufficient or you need granular detail.\n\nWiki articles are read-only synthesis — regenerated by /wiki-compile.${stale_warning}"
-      ;;
-    primary)
-      context="[Wiki Compiler] \"$name\" wiki is the primary knowledge source.\nLocation: $output_path\nTopics: $topic_count | Last compiled: $last_compiled\n\nRead ${output_path}INDEX.md at session start. Only read raw source files when a wiki article's Sources section points you there for detail.\n\nWiki articles are read-only synthesis — regenerated by /wiki-compile.${stale_warning}"
-      ;;
-    *)
-      context="[Wiki Compiler] Wiki available for \"$name\" at $output_path ($topic_count topics, last compiled: $last_compiled). Run /wiki-compile to update.${stale_warning}"
-      ;;
-  esac
-fi
-
-escaped_context=$(escape_for_json "$context")
-
-# Output in correct format per platform
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
   printf '{\n  "additional_context": "%s"\n}\n' "$escaped_context"
 elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
@@ -136,5 +29,3 @@ elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
 else
   printf '{\n  "additionalContext": "%s"\n}\n' "$escaped_context"
 fi
-
-exit 0

@@ -7,8 +7,8 @@
     {
       "name": "llm-wiki-compiler",
       "source": "./plugin",
-      "description": "Compile markdown knowledge files into a topic-based wiki. Implements Karpathy's LLM Knowledge Base pattern.",
-      "version": "1.0.0",
+      "description": "Compile markdown knowledge files or codebases into a topic-based wiki. Implements Karpathy's LLM Knowledge Base pattern.",
+      "version": "2.1.0",
       "author": {
         "name": "Sumant"
       }

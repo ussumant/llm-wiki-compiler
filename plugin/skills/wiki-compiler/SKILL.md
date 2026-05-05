@@ -9,6 +9,25 @@ This skill contains the 5-phase algorithm for compiling source files into a topi
 
 **Safety rule:** NEVER modify any file outside the configured output directory. Source files are read-only.
 
+## Codex Usage
+
+In Codex, use this skill through natural-language workflow prompts instead of Claude slash commands. The preferred capture UX is intentionally simple: paste a link and say "capture this in my wiki."
+
+| Codex prompt | Claude command equivalent |
+| --- | --- |
+| "Initialize a wiki for this repo" | `/wiki-init` |
+| "Set up my global wiki" | `/wiki-global-init` |
+| "Capture this in my wiki: {url}. Context: {why it matters}" | `/wiki-capture {url} --context "{why it matters}"` |
+| "{url} — capture this in my wiki" | `/wiki-capture {url}` |
+| "Compile changed sources into the wiki" | `/wiki-compile` |
+| "Search the compiled wiki for architecture decisions" | `/wiki-search architecture decisions` |
+| "Answer this from the compiled wiki: {question}" | `/wiki-query {question}` |
+| "Launch the wiki knowledge graph" | `/wiki-visualize` |
+
+The command markdown files in `commands/` remain the canonical workflow specs. When those files mention `${CLAUDE_PLUGIN_ROOT}`, Codex should resolve the same paths relative to the installed plugin root.
+
+For session-start context in Codex, read `hooks/wiki-session-context` as the shared helper. It prints the same wiki guidance that Claude receives through the `SessionStart` wrapper, but no Codex hook is registered until a supported hook schema is available.
+
 ## Prerequisites
 
 Before running, read `.wiki-compiler.json` from the project root to get:
@@ -19,7 +38,9 @@ Before running, read `.wiki-compiler.json` from the project root to get:
 - `topic_hints[]` — optional seed topics from the user
 - `link_style` — "obsidian" (default) or "markdown"
 
-**Note:** Sources don't have to live alongside the project. `/fetch-bookmarks <source>` can pull content from external services (X bookmarks today; Readwise, Pocket, GitHub stars planned) into a local directory that appears in `sources[]` alongside everything else.
+**Global wiki default:** "my wiki" means the global wiki at `~/Knowledge` unless `LLM_WIKI_GLOBAL_DIR` is set. Local/project wikis still live wherever a repo or folder has its own `.wiki-compiler.json`. A user can paste a URL and say "capture this in my wiki" to save one link plus context into the global wiki by default; "capture this in this project wiki" targets the local wiki.
+
+**Note:** Sources don't have to live alongside the project. Captures are stored under `wiki-sources/captures/` in the target wiki. `/fetch-bookmarks <source>` can pull batches from external services (X bookmarks today; Readwise, Pocket, GitHub stars planned) into a local directory that appears in `sources[]` alongside everything else.
 
 **Codebase mode additional config:**
 - `service_discovery` — "auto" (detect monorepo vs single project) or "manual"

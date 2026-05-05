@@ -1,0 +1,50 @@
+{
+  "name": "llm-wiki-compiler",
+  "version": "2.1.0",
+  "description": "Compile knowledge files or codebases into topic-based wikis that agents can read before raw sources.",
+  "author": {
+    "name": "Sumant",
+    "url": "https://github.com/ussumant"
+  },
+  "homepage": "https://saydo-5cd0e3d7.mintlify.app/",
+  "repository": "https://github.com/ussumant/llm-wiki-compiler",
+  "license": "MIT",
+  "keywords": [
+    "wiki",
+    "knowledge-base",
+    "codebase",
+    "markdown",
+    "obsidian",
+    "context-optimization",
+    "agent-memory"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "LLM Wiki Compiler",
+    "shortDescription": "Compile project knowledge into agent-readable wikis",
+    "longDescription": "LLM Wiki Compiler turns scattered markdown files or codebase knowledge into topic-based wiki articles with coverage indicators, source backlinks, schema evolution, and a knowledge graph. In Codex, use the bundled skill through natural-language prompts rather than Claude slash commands.",
+    "developerName": "Sumant",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://saydo-5cd0e3d7.mintlify.app/",
+    "privacyPolicyURL": "https://github.com/ussumant/llm-wiki-compiler",
+    "termsOfServiceURL": "https://github.com/ussumant/llm-wiki-compiler/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Capture this in my wiki: https://example.com",
+      "Set up my global wiki",
+      "Compile changed sources into the wiki"
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/logo.svg",
+    "logo": "./assets/logo.svg",
+    "screenshots": [
+      "./assets/before-after.png",
+      "./assets/knowledge-graph.png",
+      "./assets/knowledge-graph-panel.png"
+    ]
+  }
+}

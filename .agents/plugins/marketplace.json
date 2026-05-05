@@ -1,0 +1,20 @@
+{
+  "name": "llm-wiki-compiler",
+  "interface": {
+    "displayName": "LLM Wiki Compiler"
+  },
+  "plugins": [
+    {
+      "name": "llm-wiki-compiler",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

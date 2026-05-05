@@ -1,8 +1,14 @@
 # LLM Wiki Compiler
 
-A Claude Code plugin that compiles knowledge into a topic-based wiki — from scattered markdown files **or entire codebases**. Reduce context costs by ~90% and give your agent a synthesized understanding of any project.
+A Claude Code and Codex-compatible plugin that compiles knowledge into a topic-based wiki — from scattered markdown files **or entire codebases**. Reduce context costs by ~90% and give your agent a synthesized understanding of any project.
 
 **[Documentation](https://saydo-5cd0e3d7.mintlify.app/)**
+
+### What's New in v2.1
+
+- **Codex-compatible plugin metadata** — install from the same `plugin/` package root
+- **Skill-first Codex workflows** — use natural prompts instead of Claude slash commands
+- **Shared session context helper** — one wiki context renderer for Claude hooks and Codex guidance
 
 ### What's New in v2.0
 
@@ -44,6 +50,7 @@ flowchart LR
 
     subgraph Commands["⚡ Commands"]
         INIT["/wiki-init<br/>samples files<br/>proposes structure"]
+        CAPTURE["/wiki-capture<br/>link + context"]
         COMPILE["/wiki-compile<br/>batch compilation"]
         INGEST["/wiki-ingest<br/>single file, interactive"]
         SEARCH["/wiki-search<br/>find anything"]
@@ -60,6 +67,7 @@ flowchart LR
     end
 
     Sources -->|"383 files · 13 MB"| COMPILE --> Wiki
+    Sources -->|"1 link + context"| CAPTURE --> Wiki
     Sources -->|"1 file"| INGEST --> Wiki
     INIT -->|"creates config +<br/>article structure"| COMPILE
     Wiki -->|"13 articles · 161 KB<br/>84% fewer tokens"| LLM["🤖 Your LLM Agent<br/>reads wiki, not raw files"]
@@ -69,28 +77,54 @@ flowchart LR
 
 ## Install
 
-### From GitHub
+### Clone the repo
 
 ```bash
-# 1. Clone the repo
 git clone https://github.com/ussumant/llm-wiki-compiler.git
-
-# 2. Add as a local marketplace
-claude plugin marketplace add /path/to/llm-wiki-compiler
-
-# 3. Install the plugin
-claude plugin install llm-wiki-compiler
-
-# 4. Restart Claude Code for hooks to register
 ```
 
-### For a Single Session (no install)
+### Claude Code
+
+```bash
+# Add as a local marketplace
+claude plugin marketplace add /path/to/llm-wiki-compiler
+
+# Install the plugin
+claude plugin install llm-wiki-compiler
+
+# Restart Claude Code for hooks to register
+```
+
+For a single Claude session without installing:
 
 ```bash
 claude --plugin-dir /path/to/llm-wiki-compiler/plugin
 ```
 
+### Codex
+
+This repo includes a Codex plugin manifest at `plugin/.codex-plugin/plugin.json` and local marketplace metadata at `.agents/plugins/marketplace.json`. Add this repository as a local Codex plugin marketplace, then install **LLM Wiki Compiler** from that marketplace.
+
+Codex does not use Claude slash commands. Invoke the same workflows with prompts:
+
+| Workflow | Claude Code | Codex prompt |
+| --- | --- | --- |
+| Initialize | `/wiki-init` | "Initialize a wiki for this repo" |
+| Global setup | `/wiki-global-init` | "Set up my global wiki" |
+| Capture link | `/wiki-capture URL --context "why it matters"` | "URL — capture this in my wiki" |
+| Compile | `/wiki-compile` | "Compile changed sources into the wiki" |
+| Ingest | `/wiki-ingest path/to/file.md` | "Ingest this source into the wiki: path/to/file.md" |
+| Search | `/wiki-search architecture decisions` | "Search the compiled wiki for architecture decisions" |
+| Query | `/wiki-query what do we know about retention?` | "Answer from the compiled wiki: what do we know about retention?" |
+| Lint | `/wiki-lint` | "Lint the compiled wiki" |
+| Visualize | `/wiki-visualize` | "Launch the wiki knowledge graph" |
+| Migrate | `/wiki-migrate` | "Show a wiki-first startup migration report" |
+
+The shared session context helper is available at `plugin/hooks/wiki-session-context`. Claude calls it automatically through the `SessionStart` hook; Codex users can ask Codex to read the compiled wiki at session start until Codex hook registration is standardized.
+
 ## Quick Start
+
+### Claude Code
 
 ```bash
 # 1. Initialize — auto-detects whether this is a codebase or knowledge project,
@@ -107,6 +141,53 @@ claude --plugin-dir /path/to/llm-wiki-compiler/plugin
 ```
 
 After setup, Claude reads wiki articles automatically at session start — no special commands needed. The wiki updates incrementally when sources change.
+
+### Codex
+
+Ask Codex:
+
+```text
+Initialize a wiki for this repo
+https://example.com/article — capture this in my wiki
+Compile changed sources into the wiki
+Launch the wiki knowledge graph
+```
+
+For ongoing sessions, ask Codex to start with `wiki/INDEX.md`, then read relevant topic articles before raw sources.
+
+## Global and Local Wikis
+
+LLM Wiki Compiler supports two layers:
+
+| Layer | Default location | Use it for |
+| --- | --- | --- |
+| Global wiki | `~/Knowledge` | Cross-project links, ideas, research, videos, bookmarks, and reusable patterns |
+| Local wiki | Current repo/folder with `.wiki-compiler.json` | Deep project-specific architecture, decisions, source files, and operating knowledge |
+
+The default global folder is:
+
+```text
+~/Knowledge
+```
+
+You can override it:
+
+```bash
+export LLM_WIKI_GLOBAL_DIR="$HOME/CompanyKnowledge"
+```
+
+Routing defaults:
+
+- "capture this in my wiki" → global wiki
+- "capture this in this repo/project wiki" → local wiki
+- "capture this in both" → global and local
+- no global wiki yet → initialize `~/Knowledge` automatically from the global wiki template
+
+Set it up explicitly with:
+
+```text
+Set up my global wiki
+```
 
 ## Codebase Mode (New in v2.0)
 
@@ -294,6 +375,70 @@ Uninstall with `/fetch-bookmarks schedule x --uninstall` (or `launchctl unload` 
 
 Copy `plugin/skills/wiki-compiler/adapters/x.md` and follow the contract documented in `plugin/commands/fetch-bookmarks.md`: preflight, consent, sync, markdown output, wire into `sources[]`, suggest compile.
 
+## Capture Links With Context
+
+The primary UX is: paste a link and say **"capture this in my wiki."** You do not need to remember command names.
+
+In Codex:
+
+```text
+https://example.com/article
+
+capture this in my wiki
+```
+
+Add context when you have it:
+
+```text
+https://example.com/article
+
+capture this in my wiki
+
+Context: Relevant to Codex plugin onboarding and skill discovery.
+```
+
+Claude Code users can use the explicit command form:
+
+```bash
+/wiki-capture https://example.com/article --context "Relevant to Codex plugin onboarding and skill discovery"
+```
+
+The capture flow is adapter-based:
+
+| Source | Adapter | What gets saved |
+|--------|---------|-----------------|
+| Web article | `capture-web` | readable page text, metadata, relevance notes |
+| YouTube | `capture-youtube` | transcript evidence, timestamps, workflow notes when relevant |
+| X/Twitter link | `capture-x` | post/thread text or bookmark source, date-aware relevance notes |
+
+Captured links are written to `wiki-sources/captures/` inside the target wiki as markdown with frontmatter, the original URL, captured date, user context, extracted content, relevance notes, and candidate wiki connections. The wiki then uses the same ingest/compile logic to update existing topics or propose a new topic/concept.
+
+### Connector Roadmap
+
+The capture system is intentionally adapter-based. Future connectors should feed durable, provenance-rich source markdown into the same compiler pipeline instead of writing topic articles directly.
+
+Planned connector shape:
+
+```text
+connector pulls context
+→ normalizes to markdown with metadata
+→ writes to wiki-sources/{connector}/
+→ adds that folder to sources[]
+→ wiki compile builds topic/concept connections
+```
+
+Candidate connectors:
+
+| Connector | Use case |
+|-----------|----------|
+| Granola | Meeting notes, summaries, decisions, and follow-ups |
+| Google Drive / Docs | Docs, strategy notes, specs, and research folders |
+| Slack | High-signal threads, decisions, and customer/team context |
+| Linear / GitHub Issues | Roadmap, bugs, project decisions, and implementation context |
+| Readwise / Pocket | Reading highlights and saved articles |
+
+The key rule: connectors create source material; the wiki compiler owns synthesis and connections.
+
 ## How It Works (Knowledge Mode)
 
 ### Commands
@@ -301,7 +446,9 @@ Copy `plugin/skills/wiki-compiler/adapters/x.md` and follow the contract documen
 | Command | Purpose |
 |---------|---------|
 | `/wiki-init` | One-time setup -- auto-detects markdown directories, samples files, proposes custom article structure |
+| `/wiki-global-init` | Initialize the default global wiki at `~/Knowledge` or `LLM_WIKI_GLOBAL_DIR` |
 | `/wiki-compile` | Compiles source files into topic articles (incremental -- only recompiles changes). Generates `schema.md` on first run. |
+| `/wiki-capture` | Capture a URL plus context, normalize it into markdown, and connect it to existing topics/concepts |
 | `/wiki-ingest` | Add a single source interactively -- read, discuss key takeaways, update relevant wiki articles |
 | `/fetch-bookmarks` | Pull bookmarks from external services (X today; Readwise, Pocket planned). `schedule <source>` wires a daily launchd job. |
 | `/wiki-search` | Search across wiki articles by keyword or phrase |

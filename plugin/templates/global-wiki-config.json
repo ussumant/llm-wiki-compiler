@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "Global Knowledge",
+  "mode": "knowledge",
+  "sources": [
+    {
+      "path": "wiki-sources/captures/",
+      "description": "Captured links and notes with user context"
+    }
+  ],
+  "output": "wiki/",
+  "auto_update": "prompt",
+  "link_style": "obsidian",
+  "topic_hints": [
+    "projects",
+    "tools",
+    "workflows",
+    "research",
+    "ideas"
+  ],
+  "article_sections": [
+    {
+      "name": "Summary",
+      "description": "Standalone briefing of the topic and why it matters",
+      "required": true
+    },
+    {
+      "name": "Key Ideas",
+      "description": "Important claims, examples, mechanisms, or patterns"
+    },
+    {
+      "name": "Connections",
+      "description": "How this topic connects to projects, workflows, tools, or other wiki topics"
+    },
+    {
+      "name": "Open Questions",
+      "description": "Unresolved questions, follow-up research, or decisions to revisit"
+    },
+    {
+      "name": "Sources",
+      "description": "Backlinks to all contributing source files",
+      "required": true
+    }
+  ]
+}
