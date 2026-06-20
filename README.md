@@ -142,6 +142,8 @@ The shared session context helper is available at `plugin/hooks/wiki-session-con
 
 After setup, Claude reads wiki articles automatically at session start — no special commands needed. The wiki updates incrementally when sources change.
 
+> **No plugin? Different agent?** You can compile a wiki with **any** LLM agent (Codex, Cursor, Gemini, a plugin-less Claude) using a single self-contained, project-agnostic protocol file. Deploy it with `deploy-protocol.ps1` and point the agent at it — no skill or template files required. See **[EXPORTING.md](EXPORTING.md)**.
+
 ### Codex
 
 Ask Codex:
