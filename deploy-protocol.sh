@@ -15,6 +15,12 @@
 # configuration" appendix (built from .wiki-compiler.json) is appended to the
 # deployed copy, specializing it for that project without manual drift.
 #
+# Verification status:
+#   The generic deploy, output resolution, overwrite guard, and no-jq degradation
+#   paths are tested. The --inline-config / Appendix C generation path mirrors the
+#   verified deploy-protocol.ps1 logic but has NOT yet been executed on a POSIX host
+#   with jq present — pending cross-platform verification.
+#
 # Usage:
 #   ./deploy-protocol.sh [options] <target-repo>
 #
