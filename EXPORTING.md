@@ -130,4 +130,5 @@ For copies you specialized with `-InlineConfig`, **include it on redeploy too** 
 ## Files reference
 
 - `COMPILE_PROTOCOL.md` — the portable protocol (master). See its Appendix A for a minimal config and Appendix B for the default article sections.
-- `deploy-protocol.ps1` — the deploy script. `Get-Help .\deploy-protocol.ps1 -Full` for full parameter docs.
+- `deploy-protocol.ps1` — the deploy script (Windows/PowerShell). `Get-Help .\deploy-protocol.ps1 -Full` for full parameter docs.
+- `deploy-protocol.sh` — POSIX/bash equivalent (macOS/Linux/Git Bash). Same behavior with long-form flags: `--output-dir`, `--inline-config`, `--force`, `--dry-run`. `--inline-config` requires [`jq`](https://jqlang.github.io/jq/) for parsing the config; without it the script still deploys the generic protocol (and resolves the output dir to `wiki`). Run `./deploy-protocol.sh --help`.
